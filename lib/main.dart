@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'models/medicine.dart';
 import 'services/medicine_store.dart';
+import 'models/dose_event.dart';
+import 'services/dose_history_store.dart';
 import 'family_page.dart';
 
 void main() => runApp(const GPHealthApp());
@@ -42,7 +44,9 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   final store = MedicineStore();
+  final historyStore = DoseHistoryStore();
   final medicines = <Medicine>[];
+  final doseHistory = <DoseEvent>[];
   int tab = 0;
   bool loading = true;
   String? storageError;
@@ -56,11 +60,15 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _loadMedicines() async {
     try {
       final saved = await store.load();
+      final history = await historyStore.load();
       if (!mounted) return;
       setState(() {
         medicines
           ..clear()
           ..addAll(saved);
+        doseHistory
+          ..clear()
+          ..addAll(history);
         loading = false;
       });
     } catch (_) {
@@ -122,10 +130,27 @@ class _MainScreenState extends State<MainScreen> {
     note.dispose();
   }
 
-  Future<void> toggleTaken(Medicine medicine) async {
-    setState(() => medicine.taken = !medicine.taken);
-    await _saveMedicines();
-    if (mounted) notice(medicine.taken ? 'Marked as taken.' : 'Marked as not taken.');
+  Future<void> recordDose(Medicine medicine, String status) async {
+    final event = DoseEvent(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      medicineId: medicine.id,
+      medicineName: medicine.name,
+      status: status,
+      recordedAt: DateTime.now(),
+    );
+    try {
+      await historyStore.add(event);
+      if (status == 'taken') medicine.taken = true;
+      if (!mounted) return;
+      setState(() {
+        doseHistory.insert(0, event);
+        if (doseHistory.length > 500) doseHistory.removeLast();
+      });
+      await _saveMedicines();
+      if (mounted) notice(status == 'taken' ? 'Recorded as taken.' : 'Recorded as skipped.');
+    } catch (_) {
+      if (mounted) notice('Could not save this dose record. Please try again.');
+    }
   }
 
   @override
@@ -243,18 +268,40 @@ class _MainScreenState extends State<MainScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.tonalIcon(
-                onPressed: () => toggleTaken(m),
-                icon: Icon(m.taken ? Icons.check_circle : Icons.check),
-                label: Text(m.taken ? 'Marked as taken' : 'Mark as taken'),
+                onPressed: () => recordDose(m, 'taken'),
+                icon: const Icon(Icons.check_circle),
+                label: const Text('Record as taken'),
               ),
             ),
+            Row(children: [
+              Expanded(child: TextButton.icon(
+                onPressed: () => recordDose(m, 'skipped'),
+                icon: const Icon(Icons.skip_next),
+                label: const Text('Skipped'),
+              )),
+            ]),
           ]),
+        ),
+      )),
+    const SizedBox(height: 18),
+    const Text('Dose history', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: navy)),
+    const SizedBox(height: 8),
+    if (doseHistory.isEmpty)
+      const Card(color: Colors.white, child: ListTile(title: Text('No dose activity yet'), subtitle: Text('Taken or skipped entries will appear here.')))
+    else
+      ...doseHistory.take(12).map((event) => Card(
+        color: Colors.white,
+        child: ListTile(
+          leading: Icon(event.status == 'taken' ? Icons.check_circle : Icons.skip_next,
+            color: event.status == 'taken' ? teal : Colors.orange),
+          title: Text(event.medicineName, style: const TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text('${event.status == 'taken' ? 'Taken' : 'Skipped'} · ${event.recordedAt.toLocal()}'),
         ),
       )),
     const SizedBox(height: 10),
     ElevatedButton.icon(onPressed: addMedicine, icon: const Icon(Icons.add), label: const Text('Add medicine')),
     const SizedBox(height: 10),
-    const Text('Reminder alarms and dose history are the next development step. This version stores your list locally but does not yet send notifications.', style: TextStyle(color: Color(0xFF526777), height: 1.4)),
+    const Text('Dose history records what you report. Reminder alarms are not enabled in this build yet.', style: TextStyle(color: Color(0xFF526777), height: 1.4)),
   ]);
 
   Widget _familyPage() => FamilyPage(onNotice: notice);
