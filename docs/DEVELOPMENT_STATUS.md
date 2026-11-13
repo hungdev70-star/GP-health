@@ -3,7 +3,9 @@
 ## Implemented in the prototype
 - Flutter app shell with large, high-contrast Home, Medicines and Family screens.
 - Add medicine with a name, reminder-time label and optional note.
-- Mark a medicine as taken / not taken.
+- Record an individual medicine dose as taken or skipped.
+- Persist a local dose history with medicine name, action and timestamp (latest 500 entries).
+- Show the latest 12 dose-history entries in the Medicines screen.
 - Medicine list persists locally across app restarts using SharedPreferences; core list viewing and editing does not require internet.
 - Basic corrupt-data handling for saved medicine and contact JSON.
 - Add family contacts with a name and phone number; contact data persists locally.
@@ -15,7 +17,7 @@
 
 ## Not implemented yet
 - Scheduled local medicine notifications, permission flow and reboot rescheduling.
-- Dose event history (taken, skipped, snoozed) with timestamps.
+- Snoozing doses and editing/deleting medicines with automatic reminder updates.
 - Voice recognition, text-to-speech, wake phrase and spoken-language auto-detection.
 - Complete translated UI catalog and verified offline speech packs for the 20 target Indian languages.
 - Secure multi-user caregiver sharing and cloud synchronization.
@@ -34,7 +36,7 @@
 
 ## Next implementation sequence
 1. Local notifications, permission flow, schedule validation and notification rescheduling.
-2. Taken/skipped/snoozed event history.
+2. Snooze support and medicine editing/deletion.
 3. Language selector and translated UI framework.
 4. Offline speech capability detection and push-to-talk fallback.
 5. Family access, consent, revocation and secure synchronization.
