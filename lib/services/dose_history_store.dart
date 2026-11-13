@@ -21,8 +21,6 @@ class DoseHistoryStore {
       return [];
     } on TypeError {
       return [];
-    } on FormatException {
-      return [];
     }
   }
 
