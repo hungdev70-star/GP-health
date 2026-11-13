@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/medicine.dart';
 import 'services/medicine_store.dart';
+import 'family_page.dart';
 
 void main() => runApp(const GPHealthApp());
 
@@ -188,14 +189,7 @@ class _MainScreenState extends State<MainScreen> {
     const SizedBox(height: 14),
     SizedBox(height: 70, child: ElevatedButton.icon(
       style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB3261E), foregroundColor: Colors.white),
-      onPressed: () => showDialog(context: context, builder: (c) => AlertDialog(
-        title: const Text('Emergency help'),
-        content: const Text('Would you like to continue to your saved emergency contact? A call will only be placed after confirmation.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-          FilledButton(onPressed: () { Navigator.pop(c); notice('Emergency contacts are not configured yet. No call was placed.'); }, child: const Text('Continue')),
-        ],
-      )),
+      onPressed: () { setState(() => tab = 2); notice('Open Family & SOS to call your saved emergency contact.'); },
       icon: const Icon(Icons.sos, size: 28),
       label: const Text('EMERGENCY SOS', style: TextStyle(fontSize: 20)),
     )),
@@ -263,19 +257,5 @@ class _MainScreenState extends State<MainScreen> {
     const Text('Reminder alarms and dose history are the next development step. This version stores your list locally but does not yet send notifications.', style: TextStyle(color: Color(0xFF526777), height: 1.4)),
   ]);
 
-  Widget _familyPage() => ListView(padding: const EdgeInsets.all(20), children: [
-    const Text('Family & SOS', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: navy)),
-    const SizedBox(height: 8),
-    const Text('Keep your trusted people close.', style: TextStyle(fontSize: 18)),
-    const SizedBox(height: 18),
-    Card(color: Colors.white, child: ListTile(
-      leading: const CircleAvatar(child: Icon(Icons.person)),
-      title: const Text('No family contacts yet', style: TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: const Text('Contact setup is planned next.'),
-      trailing: IconButton(onPressed: () => notice('Family contact setup is not enabled yet.'), icon: const Icon(Icons.add_circle_outline)),
-    )),
-    const SizedBox(height: 16),
-    const Text('Safety', style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: navy)),
-    const Text('Emergency calls will require your confirmation. This prototype does not place calls or share your location.', style: TextStyle(fontSize: 17, height: 1.4)),
-  ]);
+  Widget _familyPage() => FamilyPage(onNotice: notice);
 }
