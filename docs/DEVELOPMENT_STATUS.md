@@ -1,35 +1,40 @@
 # GP Health development status
 
-## Implemented in the starter milestone
+## Implemented in the prototype
 - Flutter app shell with large, high-contrast Home, Medicines and Family screens.
-- Add a medicine with a name, reminder-time label and optional note.
+- Add medicine with a name, reminder-time label and optional note.
 - Mark a medicine as taken / not taken.
-- Local on-device persistence using SharedPreferences. The medicine list survives an app restart and does not require internet access.
-- Basic corrupt-data handling so invalid local JSON does not crash startup.
-- SOS confirmation UI that explicitly does not claim to place a call yet.
+- Medicine list persists locally across app restarts using SharedPreferences; core list viewing and editing does not require internet.
+- Basic corrupt-data handling for saved medicine and contact JSON.
+- Add family contacts with a name and phone number; contact data persists locally.
+- Mark one saved family contact as the emergency contact.
+- Call flow opens the phone app only after an explicit confirmation dialog.
+- SOS screen routes to Family & SOS, where the saved emergency contact can be called after confirmation.
 - Medicine model serialization tests.
+- GitHub Actions workflow for Flutter static analysis and tests.
 
 ## Not implemented yet
-- Scheduled local medicine notifications, notification permissions and reboot rescheduling.
-- Taken/skipped event history and caregiver audit trail.
-- Real phone-call integration and emergency contact management.
-- Voice recognition, text-to-speech, wake phrase or language auto-detection.
-- Translation catalog and verified offline speech packs for the 20 target Indian languages.
+- Scheduled local medicine notifications, permission flow and reboot rescheduling.
+- Dose event history (taken, skipped, snoozed) with timestamps.
+- Voice recognition, text-to-speech, wake phrase and spoken-language auto-detection.
+- Complete translated UI catalog and verified offline speech packs for the 20 target Indian languages.
 - Secure multi-user caregiver sharing and cloud synchronization.
 - Authentication, subscription entitlements, Google Play Billing and Apple In-App Purchase.
 - Encrypted health-data storage and formal privacy/security review.
+- Device testing on Android and iOS.
 
 ## Offline and safety rules
-- Medicine data must remain usable without internet.
+- Medicine and contact lists are stored locally and usable without internet.
 - Cross-device family sharing requires connectivity; offline mode can only use data already on the device.
 - Do not make medication, dosage or treatment recommendations.
-- Do not place an SOS call without an explicit confirmation step.
+- Do not place a call without an explicit confirmation step.
 - Do not represent the app as a medical device or substitute for professional care.
-- Local preferences storage is a prototype convenience layer, not encrypted medical-record storage. Replace or protect it before production.
+- SharedPreferences is prototype convenience storage, not encrypted medical-record storage. Replace it with a properly secured database before production.
+- Phone call launch behavior must be tested on real Android and iOS devices. The app opens the platform phone handler; it does not bypass carrier or device confirmation behavior.
 
 ## Next implementation sequence
 1. Local notifications, permission flow, schedule validation and notification rescheduling.
-2. Contact management and confirmation-gated dialler launch.
+2. Taken/skipped/snoozed event history.
 3. Language selector and translated UI framework.
 4. Offline speech capability detection and push-to-talk fallback.
 5. Family access, consent, revocation and secure synchronization.
