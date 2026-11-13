@@ -1,0 +1,14 @@
+{
+  "@@locale": "en",
+  "appTitle": "GP Health",
+  "greeting": "Namaste!",
+  "home": "Home",
+  "medicines": "Medicines",
+  "family": "Family",
+  "addMedicine": "Add medicine",
+  "medicineName": "Medicine name",
+  "reminderTime": "Reminder time",
+  "markAsTaken": "Mark as taken",
+  "emergencySos": "EMERGENCY SOS",
+  "talkToAi": "Talk to AI"
+}
