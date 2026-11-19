@@ -48,11 +48,13 @@ jobs:
           s = p.read_text()
           s = s.replace('<manifest ', '<manifest ', 1)
           marker = '<application'
-          permissions = '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\\n    <uses-permission android:name="android.permission.INTERNET" />\\n'
+          nl = chr(10)
+          permissions = '    <uses-permission android:name="android.permission.RECORD_AUDIO" />' + nl + '    <uses-permission android:name="android.permission.INTERNET" />' + nl
           if 'android.permission.RECORD_AUDIO' not in s:
               s = s.replace(marker, permissions + marker, 1)
           if '<queries>' not in s:
-              s = s.replace(marker, '    <queries>\\n        <intent>\\n            <action android:name="android.speech.RecognitionService" />\\n        </intent>\\n    </queries>\\n' + marker, 1)
+              queries = nl.join(['    <queries>', '        <intent>', '            <action android:name="android.speech.RecognitionService" />', '        </intent>', '    </queries>']) + nl
+              s = s.replace(marker, queries + marker, 1)
           p.write_text(s)
           PY
       - name: Build debug APK
