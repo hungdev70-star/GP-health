@@ -40,6 +40,21 @@ jobs:
           java-version: '17'
       - name: Generate Android platform project
         run: flutter create --platforms=android --org com.gphealth --project-name gp_health .
+      - name: Configure Android speech permissions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('android/app/src/main/AndroidManifest.xml')
+          s = p.read_text()
+          s = s.replace('<manifest ', '<manifest ', 1)
+          marker = '<application'
+          permissions = '    <uses-permission android:name="android.permission.RECORD_AUDIO" />\\n    <uses-permission android:name="android.permission.INTERNET" />\\n'
+          if 'android.permission.RECORD_AUDIO' not in s:
+              s = s.replace(marker, permissions + marker, 1)
+          if '<queries>' not in s:
+              s = s.replace(marker, '    <queries>\\n        <intent>\\n            <action android:name="android.speech.RecognitionService" />\\n        </intent>\\n    </queries>\\n' + marker, 1)
+          p.write_text(s)
+          PY
       - name: Build debug APK
         run: flutter build apk --debug
       - name: Upload Android preview
