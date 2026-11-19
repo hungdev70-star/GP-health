@@ -68,6 +68,16 @@ jobs:
           s = s.replace('minSdk = flutter.minSdkVersion', 'minSdk = 24')
           p.write_text(s)
           PY
+      - name: Upgrade Kotlin Gradle plugin for speech dependencies
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('android/settings.gradle')
+          s = p.read_text()
+          s = s.replace('version "1.8.0"', 'version "2.2.20"')
+          p.write_text(s)
+          print(s)
+          PY
       - name: Build debug APK
         run: flutter build apk --debug
       - name: Upload Android preview
