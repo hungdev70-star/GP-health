@@ -22,4 +22,4 @@ Free $0 · Pro $1 · Max $10 · Max Plus $50 · Ultra $100 · Ultra Pulse $500.
 Core medicine reminders, saved contacts, and SOS contact access should remain free.
 
 ## Status
-Project specification captured. The first implementation milestone is the accessible offline-first app shell and medicine workflow. Platform speech support, background wake-word behavior, multi-device family sync, and store billing require separate platform testing and configuration.
+Project specification captured. The app shell, local medicine workflow, family contact workflow, and first push-to-talk voice assistant screen are implemented. The assistant currently handles a small set of built-in English commands; it is not yet a connected generative AI assistant. Speech recognition depends on the device speech service and may require internet. Background wake-word behavior, Indian-language support, offline speech packs, multi-device family sync, and store billing require separate implementation and device testing.
