@@ -4,6 +4,7 @@ import 'services/medicine_store.dart';
 import 'models/dose_event.dart';
 import 'services/dose_history_store.dart';
 import 'family_page.dart';
+import 'assistant_page.dart';
 
 void main() => runApp(const GPHealthApp());
 
@@ -200,7 +201,10 @@ class _MainScreenState extends State<MainScreen> {
         const Text('Voice features are being built. Your medicine list works offline.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16)),
         const SizedBox(height: 12),
         OutlinedButton(
-          onPressed: () => notice('Voice interaction is not enabled in this build yet.'),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AssistantPage(
+            onOpenMedicines: () { if (mounted) setState(() => tab = 1); Navigator.of(context).pop(); },
+            onOpenFamily: () { if (mounted) setState(() => tab = 2); Navigator.of(context).pop(); },
+          ))),
           child: const Text('Start speaking', style: TextStyle(color: Colors.white, fontSize: 18)),
         ),
       ]),
