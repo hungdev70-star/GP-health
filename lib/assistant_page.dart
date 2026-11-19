@@ -91,10 +91,12 @@ class _AssistantPageState extends State<AssistantPage> {
           _handleCommand(result.recognizedWords);
         }
       },
-      listenFor: const Duration(seconds: 25),
-      pauseFor: const Duration(seconds: 4),
-      partialResults: true,
-      localeId: 'en_IN',
+      listenOptions: stt.SpeechListenOptions(
+        listenFor: const Duration(seconds: 25),
+        pauseFor: const Duration(seconds: 4),
+        partialResults: true,
+        localeId: 'en_IN',
+      ),
     );
   }
 
