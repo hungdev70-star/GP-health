@@ -85,7 +85,7 @@ jobs:
                   break
           if not found:
               raise SystemExit('Kotlin Gradle plugin declaration was not found')
-          p.write_text('\\n'.join(lines) + '\\n')
+          p.write_text(chr(10).join(lines) + chr(10))
           print(p.read_text())
           PY
       - name: Build debug APK
