@@ -170,8 +170,11 @@ class _AssistantPageState extends State<AssistantPage> {
     final shouldSave = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        scrollable: true,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         title: const Text('Connect GP Health AI'),
-        content: Column(
+        content: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -191,6 +194,7 @@ class _AssistantPageState extends State<AssistantPage> {
             const Text('For a public production app, use a protected backend instead of putting API keys on devices.',
               style: TextStyle(fontSize: 12, color: Color(0xFF526777))),
           ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
