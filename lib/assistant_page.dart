@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
@@ -23,6 +27,10 @@ class _AssistantPageState extends State<AssistantPage> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   final FlutterTts _tts = FlutterTts();
   final TextEditingController _textController = TextEditingController();
+  final TextEditingController _apiKeyController = TextEditingController();
+  static const _secureStorage = FlutterSecureStorage();
+  String? _previousResponseId;
+  bool _thinking = false;
   bool _available = false;
   bool _listening = false;
   bool _speaking = false;
@@ -143,7 +151,7 @@ class _AssistantPageState extends State<AssistantPage> {
       if (mounted) widget.onOpenFamily();
       return;
     }
-    if (command.contains('hello') || command.contains('hi') ||
+    if (command.contains('hello') || command == 'hi' ||
         command.contains('namaste')) {
       await _say('Namaste! I am your GP Health helper. I can open your medicines or family contacts.');
       return;
@@ -152,7 +160,114 @@ class _AssistantPageState extends State<AssistantPage> {
       await _say('You can say: open my medicines, show my family, or help. You can also type below.');
       return;
     }
-    await _say('I heard: $raw. I am still learning. For now, ask me to open your medicines, show your family, or say help.');
+    await _askAi(raw);
+  }
+
+  Future<void> _configureApiKey() async {
+    final saved = await _secureStorage.read(key: 'openai_api_key');
+    _apiKeyController.text = saved ?? '';
+    if (!mounted) return;
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Connect GP Health AI'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Enter your OpenAI API key. It is stored in this phone’s secure storage and is not committed to GitHub. API usage may cost money.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _apiKeyController,
+              obscureText: true,
+              autocorrect: false,
+              decoration: const InputDecoration(
+                labelText: 'OpenAI API key',
+                hintText: 'sk-…',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text('For a public production app, use a protected backend instead of putting API keys on devices.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF526777))),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          TextButton(onPressed: () async {
+            await _secureStorage.delete(key: 'openai_api_key');
+            if (dialogContext.mounted) Navigator.pop(dialogContext, false);
+            if (mounted) _say('The saved AI key has been removed.');
+          }, child: const Text('Remove key')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Save securely')),
+        ],
+      ),
+    );
+    if (shouldSave == true) {
+      final key = _apiKeyController.text.trim();
+      if (key.isEmpty) {
+        await _say('Please enter an API key first.');
+      } else {
+        await _secureStorage.write(key: 'openai_api_key', value: key);
+        await _say('Your AI connection key is saved on this device. You can now chat with me.');
+      }
+    }
+  }
+
+  Future<void> _askAi(String prompt) async {
+    final apiKey = await _secureStorage.read(key: 'openai_api_key');
+    if (apiKey == null || apiKey.trim().isEmpty) {
+      await _say('To turn on real AI conversations, tap the settings button and add your OpenAI API key. You can still use the built-in medicine and family commands.');
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _thinking = true;
+      _status = 'Thinking…';
+      _reply = 'Let me think about that.';
+    });
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.openai.com/v1/responses'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: jsonEncode({
+          'model': 'gpt-5.5',
+          'instructions': 'You are GP Health Saathi, a warm, patient, elderly-friendly voice companion. Use simple, short sentences. Help with everyday questions and explain app features. You are not a doctor: never diagnose, prescribe, recommend changing medicine doses, or replace emergency services. For urgent symptoms, advise contacting local emergency services or a qualified clinician. Never claim to have called anyone, changed reminders, or accessed health records. Do not ask for passwords, OTPs, or payment details.',
+          'input': prompt,
+          if (_previousResponseId != null) 'previous_response_id': _previousResponseId,
+          'max_output_tokens': 350,
+        }),
+      ).timeout(const Duration(seconds: 45));
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final message = data['error'] is Map ? (data['error']['message'] ?? 'The AI service returned an error.') : 'The AI service returned an error.';
+        throw Exception(message.toString());
+      }
+      _previousResponseId = data['id']?.toString();
+      final output = data['output'] as List? ?? [];
+      final textParts = <String>[];
+      for (final item in output) {
+        if (item is Map && item['type'] == 'message') {
+          final content = item['content'] as List? ?? [];
+          for (final part in content) {
+            if (part is Map && part['type'] == 'output_text' && part['text'] is String) {
+              textParts.add(part['text'] as String);
+            }
+          }
+        }
+      }
+      final answer = textParts.join('\n').trim();
+      if (answer.isEmpty) throw Exception('The AI did not return a text reply.');
+      await _say(answer);
+    } catch (error) {
+      final message = error.toString().replaceFirst('Exception: ', '');
+      await _say('I could not connect to the AI service. $message Please check your internet connection and API key.');
+    } finally {
+      if (mounted) setState(() => _thinking = false);
+    }
   }
 
   Future<void> _submitTyped() async {
@@ -167,6 +282,7 @@ class _AssistantPageState extends State<AssistantPage> {
     _speech.cancel();
     _tts.stop();
     _textController.dispose();
+    _apiKeyController.dispose();
     super.dispose();
   }
 
@@ -175,6 +291,7 @@ class _AssistantPageState extends State<AssistantPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Talk to GP Health', style: TextStyle(fontWeight: FontWeight.bold, color: _navy)),
+        actions: [IconButton(tooltip: 'AI settings', onPressed: _configureApiKey, icon: const Icon(Icons.settings))],
       ),
       body: SafeArea(
         child: ListView(
@@ -190,7 +307,7 @@ class _AssistantPageState extends State<AssistantPage> {
               child: Column(children: [
                 Icon(_listening ? Icons.graphic_eq : Icons.mic, color: Colors.white, size: 42),
                 const SizedBox(height: 12),
-                Text(_listening ? 'I am listening…' : 'Tap to speak', style: const TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.bold)),
+                Text(_listening ? 'I am listening…' : (_thinking ? 'Thinking…' : 'Tap to speak'), style: const TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: 150,
@@ -247,7 +364,7 @@ class _AssistantPageState extends State<AssistantPage> {
             const Text('Try saying:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
             const Text('“Open my medicines”  •  “Show my family”  •  “Help”', style: TextStyle(fontSize: 16, height: 1.5)),
             const SizedBox(height: 12),
-            const Text('First prototype: speech recognition depends on the phone’s speech service and internet may be required. Replies are currently limited to built-in commands; connected generative AI and offline wake-word listening are not enabled yet.', style: TextStyle(color: Color(0xFF526777), height: 1.45)),
+            const Text('Voice recognition depends on your phone’s speech service. AI chat needs internet and your own OpenAI API key. This prototype stores the key securely on this device; a production release should use a protected backend. The AI is not a medical professional. Background wake-word listening is not enabled yet.', style: TextStyle(color: Color(0xFF526777), height: 1.45)),
           ],
         ),
       ),
