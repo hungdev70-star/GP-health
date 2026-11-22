@@ -245,8 +245,8 @@ class _MainScreenState extends State<MainScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Icon(icon, size: 34, color: color),
           const Spacer(),
-          Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: navy)),
-          Text(sub, style: const TextStyle(color: Color(0xFF526777))),
+          Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: navy)),
+          Text(sub, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF526777))),
         ]),
       ),
     );
