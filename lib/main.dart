@@ -198,7 +198,7 @@ class _MainScreenState extends State<MainScreen> {
         const Icon(Icons.mic, color: Colors.white, size: 50),
         const Text('Talk to AI', style: TextStyle(color: Colors.white, fontSize: 25, fontWeight: FontWeight.bold)),
         const SizedBox(height: 6),
-        const Text('Voice features are being built. Your medicine list works offline.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16)),
+        const Text('AI chat is available after you connect your API key. Medicine records stay on this device.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 16)),
         const SizedBox(height: 12),
         OutlinedButton(
           onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AssistantPage(
